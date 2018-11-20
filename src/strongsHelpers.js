@@ -14,15 +14,17 @@ const outputPath = path.join(__dirname, '../resources/en/lexicons/uhl');
  * @param {function} resolve - callback when finished
  */
 export async function generateStrongsFiles(version) {
-  const versionPath = path.join(outputPath, version, 'content');
+  const versionPath = path.join(outputPath, version);
   fs.ensureDirSync(versionPath);
   const inputPath = path.join(__dirname, '../HebrewStrong.xml');
   const hebrewStrongs = fs.readFileSync(inputPath).toString();
   const words = hebrewStrongs.split('<entry id="');
+  const index = [];
   for (let i = 1, len = words.length; i < len; i++) {
     const item = words[i];
     let parts = item.split('"');
-    const name = parts[0].substr(1);
+    let strongsCode = parts[0];
+    const strongsNum = strongsCode.substr(1);
 
     const word = getXmlTag(item, 'w');
     const source = getXmlTag(item, 'source');
@@ -35,7 +37,7 @@ export async function generateStrongsFiles(version) {
     definition = addContent(source, definition, 'source');
     definition = addContent(meaning, definition, 'meaning');
     definition = addContent(usage, definition, 'usage');
-    console.log(name + " definition= " + definition);
+    console.log(strongsNum + " definition= " + definition);
     if (definition.indexOf("<") >= 0) {
       assert.fail("should not have xml: " + definition);
     }
@@ -45,10 +47,18 @@ export async function generateStrongsFiles(version) {
       long: definition
     };
     
-    const filePath = path.join(versionPath, name + ".json");
+    const filePath = path.join(versionPath, 'content', strongsNum + ".json");
     fs.outputJsonSync(filePath, entry);
+    
+    const indexEntry = {
+      id: strongsCode,
+      name: word.content
+    };
+    index.push(indexEntry);
   }
-  console.log(`Parsing Strongs`);
+  const filePath = path.join(versionPath, "index.json");
+  fs.outputJsonSync(filePath, index);
+  console.log(`Finished Parsing Strongs`);
 }
 
 function getXmlTag(text, tag) {
