@@ -34,9 +34,9 @@ export async function generateStrongsFiles(version) {
     meaning.content = replaceTag(meaning.content, 'def', '"' + def.content + '"');
 
     let definition = "";
-    definition = addContent(source, definition, 'source');
-    definition = addContent(meaning, definition, 'meaning');
-    definition = addContent(usage, definition, 'usage');
+    definition = addContent(meaning, definition, 'Meaning');
+    definition = addContent(usage, definition, 'Usage');
+    definition = addContent(source, definition, 'Source');
     console.log(strongsNum + " definition= " + definition);
     if (definition.indexOf("<") >= 0) {
       assert.fail("should not have xml: " + definition);
@@ -127,7 +127,18 @@ function addContent(source, definition, label) {
       }
       content = replaceTag(content, 'note', '');
     }
-    definition += label + ': ' + content + '\n';
+    if (definition) {
+      let trimmed = definition.trim();
+      const last = trimmed.substr(-1);
+      if (last === '.') {
+        definition = trimmed + '  ';
+      } else if ([',', ';', ':'].includes(last)) {
+        definition = trimmed.slice(0, -1) + '.  ';
+      } else {
+        definition = trimmed + '.  ';
+      }
+    }
+    definition += label + ': ' + content + '  ';
   }
   return definition;
 }
